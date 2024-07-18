@@ -5,9 +5,9 @@ import binascii
 from celery import shared_task
 from django.db import transaction
 from api.models import Device
-from api.monitor.get_logger import Logger
+from core.config.get_logger import get_logger
 
-logger = Logger("smartlogger")
+logger = get_logger()
 
 comando = 'tail -f /opt/traccar/logs/tracker-server.log'
 
@@ -74,6 +74,7 @@ def process_line(line):
 def process_stt_data(data):
     dados = data.split(";")
     if len(dados) >= 33:
+        horimeter = round(float(dados[30]) / 60, 2)  # Dividindo o horimeter por 60 e arredondando para 2 casas decimais
         device_data = {
             "HDR": dados[0], "device_id": dados[1], "report_map": dados[2], "model": dados[3],
             "software_version": dados[4], "message_type": dados[5], "data": dados[6], "hora": dados[7],
@@ -83,7 +84,7 @@ def process_stt_data(data):
             "assign_map": dados[20], "power_voltage": float(dados[21]), "bateria_suntech": float(dados[22]),
             "connection_rat": dados[23], "acceleration_x": round((float(dados[24]) / 256) ** 2, 2),
             "acceleration_y": round((float(dados[25]) / 256) ** 2, 2), "acceleration_z": round((float(dados[26]) / 256) ** 2, 2),
-            "ADC": dados[27], "GPS_odometer": dados[28], "trip_distance": dados[29], "horimeter": dados[30],
+            "ADC": dados[27], "GPS_odometer": dados[28], "trip_distance": dados[29], "horimeter": horimeter,
             "trip_horimeter": dados[31], "idle_time": dados[32], "impact": round((round((float(dados[24]) / 256) ** 2, 2) +
             round((float(dados[25]) / 256) ** 2, 2) + round((float(dados[26]) / 256) ** 2, 2)) ** 0.5, 2),
             "SoC_battery_voltage": calcular_soc(float(dados[22])), "temperatura": calcular_y(dados[27])
@@ -93,6 +94,7 @@ def process_stt_data(data):
 def process_alt_data(data):
     dados = data.split(";")
     if len(dados) >= 33:
+        horimeter = round(float(dados[30]) / 60, 2)  # Dividindo o horimeter por 60 e arredondando para 2 casas decimais
         device_data = {
             "HDR": dados[0], "device_id": dados[1], "report_map": dados[2], "model": dados[3],
             "software_version": dados[4], "message_type": dados[5], "data": dados[6], "hora": dados[7],
@@ -102,7 +104,7 @@ def process_alt_data(data):
             "assign_map": dados[20], "power_voltage": float(dados[21]), "bateria_suntech": float(dados[22]),
             "connection_rat": dados[23], "acceleration_x": round((float(dados[24]) / 256) ** 2, 2),
             "acceleration_y": round((float(dados[25]) / 256) ** 2, 2), "acceleration_z": round((float(dados[26]) / 256) ** 2, 2),
-            "ADC": dados[27], "GPS_odometer": dados[28], "trip_distance": dados[29], "horimeter": dados[30],
+            "ADC": dados[27], "GPS_odometer": dados[28], "trip_distance": dados[29], "horimeter": horimeter,
             "trip_horimeter": dados[31], "idle_time": dados[32], "impact": round((round((float(dados[24]) / 256) ** 2, 2) +
             round((float(dados[25]) / 256) ** 2, 2) + round((float(dados[26]) / 256) ** 2, 2)) ** 0.5, 2),
             "SoC_battery_voltage": calcular_soc(float(dados[22])), "temperatura": calcular_y(dados[27])
@@ -112,13 +114,15 @@ def process_alt_data(data):
 def process_uex_data(data):
     dados = data.split(";")
     if len(dados) >= 22:
+        horimeter = round(float(dados[30]) / 60, 2)  # Dividindo o horimeter por 60 e arredondando para 2 casas decimais
         device_data = {
             "HDR": dados[0], "device_id": dados[1], "report_map": dados[2], "model": dados[3],
             "software_version": dados[4], "message_type": dados[5], "data": dados[6], "hora": dados[7],
             "latitude": dados[8], "longitude": dados[9], "speed_gps": dados[10], "course": dados[11],
             "satellites": dados[12], "fix_status": dados[13], "in_state": dados[14], "out_state": dados[15],
             "data_length": dados[16], "RFID": dados[17], "velocidade_instantanea": dados[18],
-            "velocidade_pico": dados[19], "temperatura_instantanea": dados[20], "temperatura_pico": dados[21]
+            "velocidade_pico": dados[19], "temperatura_instantanea": dados[20], "temperatura_pico": dados[21],
+            "horimeter": horimeter
         }
         save_or_update_device_data(device_data)
 
@@ -161,6 +165,7 @@ def process_log_data():
                                 "velocidade_pico": dados[19], "temperatura_instantanea": dados[20], "temperatura_pico": dados[21]
                             })
                         elif hex_string.startswith('535454') and len(dados) >= 33:
+                            horimeter = round(float(dados[30]) / 60, 2)  # Dividindo o horimeter por 60 e arredondando para 2 casas decimais
                             device_data.update({
                                 "HDR": dados[0], "device_id": dados[1], "report_map": dados[2], "model": dados[3],
                                 "software_version": dados[4], "message_type": dados[5], "data": dados[6], "hora": dados[7],
@@ -170,12 +175,13 @@ def process_log_data():
                                 "assign_map": dados[20], "power_voltage": float(dados[21]), "bateria_suntech": float(dados[22]),
                                 "connection_rat": dados[23], "acceleration_x": round((float(dados[24]) / 256) ** 2, 2),
                                 "acceleration_y": round((float(dados[25]) / 256) ** 2, 2), "acceleration_z": round((float(dados[26]) / 256) ** 2, 2),
-                                "ADC": dados[27], "GPS_odometer": dados[28], "trip_distance": dados[29], "horimeter": dados[30],
+                                "ADC": dados[27], "GPS_odometer": dados[28], "trip_distance": dados[29], "horimeter": horimeter,
                                 "trip_horimeter": dados[31], "idle_time": dados[32], "impact": round((round((float(dados[24]) / 256) ** 2, 2) +
                                 round((float(dados[25]) / 256) ** 2, 2) + round((float(dados[26]) / 256) ** 2, 2)) ** 0.5, 2),
                                 "SoC_battery_voltage": calcular_soc(float(dados[22])), "temperatura": calcular_y(dados[27])
                             })
                         elif hex_string.startswith('414c54') and len(dados) >= 33:
+                            horimeter = round(float(dados[30]) / 60, 2)  # Dividindo o horimeter por 60 e arredondando para 2 casas decimais
                             device_data.update({
                                 "HDR": dados[0], "device_id": dados[1], "report_map": dados[2], "model": dados[3],
                                 "software_version": dados[4], "message_type": dados[5], "data": dados[6], "hora": dados[7],
@@ -185,7 +191,7 @@ def process_log_data():
                                 "assign_map": dados[20], "power_voltage": float(dados[21]), "bateria_suntech": float(dados[22]),
                                 "connection_rat": dados[23], "acceleration_x": round((float(dados[24]) / 256) ** 2, 2),
                                 "acceleration_y": round((float(dados[25]) / 256) ** 2, 2), "acceleration_z": round((float(dados[26]) / 256) ** 2, 2),
-                                "ADC": dados[27], "GPS_odometer": dados[28], "trip_distance": dados[29], "horimeter": dados[30],
+                                "ADC": dados[27], "GPS_odometer": dados[28], "trip_distance": dados[29], "horimeter": horimeter,
                                 "trip_horimeter": dados[31], "idle_time": dados[32], "impact": round((round((float(dados[24]) / 256) ** 2, 2) +
                                 round((float(dados[25]) / 256) ** 2, 2) + round((float(dados[26]) / 256) ** 2, 2)) ** 0.5, 2),
                                 "SoC_battery_voltage": calcular_soc(float(dados[22])), "temperatura": calcular_y(dados[27])

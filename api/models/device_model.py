@@ -63,10 +63,11 @@ class Device(Base):
 
     def save(self, *args, **kwargs):
         try:
-            self.horimeter = f"{float(self.horimeter) / 60:.2f}"
+            # Convertendo para float e formatando com duas casas decimais
+            self.horimeter = "{:.2f}".format(float(self.horimeter))
         except ValueError:
-            self.horimeter = "0.00"
-        self.updated_at = timezone.now() 
+            self.horimeter = "0.00"  # Caso ocorra um ValueError
+        self.updated_at = timezone.now()
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -75,7 +76,7 @@ class Device(Base):
 class DeviceLog(models.Model):
     device = models.ForeignKey(Device, on_delete=models.CASCADE)
     log_message = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
+    timestamp = models.DateTimeField(default=timezone.now) 
     additional_info = models.CharField(max_length=255, blank=True, null=True)
 
     class Meta:
@@ -86,3 +87,8 @@ class DeviceLog(models.Model):
 
     def __str__(self):
         return f"{self.device.device_id} - {self.timestamp}"
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            self.timestamp = timezone.now()
+        super().save(*args, **kwargs)

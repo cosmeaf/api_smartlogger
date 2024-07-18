@@ -9,7 +9,7 @@ def current_year():
     return datetime.now().year
 
 class Equipament(Base):
-    device = models.OneToOneField(Device, on_delete=models.PROTECT, related_name='equipments')
+    device = models.OneToOneField(Device, on_delete=models.CASCADE, related_name='equipments')
     horimetro_inicialSuntech = models.FloatField('Ajuste de Zero Hora Suntech', default=0)
     horimetro_inicialMaquina = models.FloatField('AZ Hora Máquina', default=0)
     horimetro_total = models.FloatField('Horímetro Total', default=0, editable=False)

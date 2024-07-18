@@ -1,24 +1,26 @@
-# api/urls.py
-
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from rest_framework_simplejwt.views import TokenRefreshView, TokenBlacklistView
-from api.views import (UserRegisterView, UserTokenObtainPairView, EquipamentViewSet,
-                       DeviceViewSet, ReportViewSet, HistoricalLogViewSet, GraphDataViewSet,
-                       MaintenanceViewSet,)
+from api.views.auth_view import UserRegisterView, UserLoginView
+from api.views.test_email_view import TestEmailView
+from api.views.device_view import DeviceViewSet
+from api.views.equipament_view import EquipamentViewSet
+from api.views.maintenance_view import MaintenanceViewSet
+from api.views.history_view import ReportViewSet, HistoricalLogViewSet, GraphDataViewSet
+
+
+
 
 router = DefaultRouter()
-router.register(r'equipament', EquipamentViewSet)
 router.register(r'device', DeviceViewSet)
+router.register(r'equipament', EquipamentViewSet)
 router.register(r'maintenance', MaintenanceViewSet)
 router.register(r'reports', ReportViewSet)
 router.register(r'historical_logs', HistoricalLogViewSet)
 router.register(r'graph_data', GraphDataViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
-    path('register/', UserRegisterView.as_view(), name='register'),
-    path('token/', UserTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('token/blacklist/', TokenBlacklistView.as_view(), name='token_blacklist'),
+    path('api/test-email/', TestEmailView.as_view(), name='test-email'),
+    path('api/register/', UserRegisterView.as_view(), name='sign-up'),
+    path('api/token/', UserLoginView.as_view(), name='sign-in'),
+    path('api/', include(router.urls)),
 ]
