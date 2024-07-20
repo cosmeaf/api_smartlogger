@@ -1,6 +1,7 @@
 
 from datetime import datetime
 from django.db import models
+from decimal import Decimal
 from api.models.base_model import Base
 from api.models.device_model import Device
 

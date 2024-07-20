@@ -1,5 +1,6 @@
 from rest_framework import viewsets
 from api.models.device_model import Device
+from rest_framework.permissions import IsAuthenticated
 from api.serializers.device_serializer import DeviceSerializer
 
 

@@ -5,12 +5,13 @@ from api.models.equipament_model import Equipament
 
 class Maintenance(Base):
     equipament = models.ForeignKey(Equipament, on_delete=models.CASCADE, related_name='maintenances')
+    horimetro_inicialSuntech = models.FloatField('Ajuste de Zero Hora Suntech', default=0)
+    horimetro_inicialMaintenance = models.FloatField('AZ Hora Máquina', default=0)
     name = models.CharField(max_length=255)
     os = models.BooleanField(default=False)
     usage_hours = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     alarm_hours = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     obs = models.TextField(blank=True, null=True)
-    horimetro_inicial_peca = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
 
     @property
     def remaining_hours(self):
@@ -19,8 +20,10 @@ class Maintenance(Base):
     @property
     def horas_uso_peca(self):
         if self.equipament and self.equipament.device:
-            horimetro_suntech = Decimal(self.equipament.device.horimeter)
-            horas_uso_peca = self.usage_hours + (horimetro_suntech - self.horimetro_inicial_peca)
+            hora_suntech = Decimal(self.equipament.device.horimeter)
+            horimetro_inicialMaintenance = Decimal(self.horimetro_inicialMaintenance)
+            horimetro_inicialSuntech = Decimal(self.horimetro_inicialSuntech)
+            horas_uso_peca = hora_suntech + horimetro_inicialMaintenance - horimetro_inicialSuntech
             return round(horas_uso_peca, 2)
         return Decimal(0)
 

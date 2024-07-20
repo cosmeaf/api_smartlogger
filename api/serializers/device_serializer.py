@@ -5,5 +5,5 @@ from api.models.device_model import Device
 class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Device
-        exclude = ['created_at', 'updated_at', 'deleted_at']
+        fields = '__all__'
         read_only_fields = ['id']

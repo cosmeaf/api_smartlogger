@@ -11,13 +11,13 @@ logger = logging.getLogger(__name__)
 class MaintenanceViewSet(viewsets.ModelViewSet):
     queryset = Maintenance.objects.all()
     serializer_class = MaintenanceSerializer
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         equipament_id = self.request.query_params.get('equipament_id')
         if equipament_id:
-            return Maintenance.objects.filter(equipament_id=equipament_id, deleted_at__isnull=True)
-        return Maintenance.objects.filter(deleted_at__isnull=True)
+            return Maintenance.objects.filter(equipament_id=equipament_id)
+        return Maintenance.objects.all()
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -32,10 +32,6 @@ class MaintenanceViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'])
     def reset_usage_hours(self, request, pk=None):
-        try:
-            instance = self.get_object()
-            instance.reset_usage_hours()
-            return Response({'status': 'usage hours reset'}, status=status.HTTP_200_OK)
-        except Exception as e:
-            logger.error(f"Failed to reset usage hours for Maintenance instance: {pk}", exc_info=e)
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        maintenance = self.get_object()
+        maintenance.reset_usage_hours()
+        return Response(status=status.HTTP_200_OK)
