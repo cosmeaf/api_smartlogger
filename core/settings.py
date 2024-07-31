@@ -43,6 +43,9 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'allauth.socialaccount.providers.facebook',
+    'rest_auth',
+    'rest_auth.registration',
     'rest_framework.authtoken',
     'django_celery_results',
     'api',
@@ -202,7 +205,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CORS_ORIGIN_ALLOW_ALL = True
 CSRF_TRUSTED_ORIGINS = [
     'https://api.smartlogger.duckdns.org',
+    'https://developer.smartlogger.duckdns.org',
     'https://smartlogger.duckdns.org',
+
 ]
 CSP_DEFAULT_SRC = ("'self'",)
 CSP_CONNECT_SRC = ("'self'", "https://api.smartlogger.duckdns.org", "ws://smartlogger.duckdns.org", "wss://smartlogger.duckdns.org")

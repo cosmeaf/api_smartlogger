@@ -9,4 +9,4 @@ from api.serializers.equipament_serialize import EquipamentSerializer
 class EquipamentViewSet(viewsets.ModelViewSet):
     queryset = Equipament.objects.all()
     serializer_class = EquipamentSerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]

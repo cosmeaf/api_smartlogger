@@ -1,4 +1,5 @@
-# models/base_model.py
+# models.py
+
 import uuid
 from django.db import models
 from simple_history.models import HistoricalRecords
@@ -17,9 +18,9 @@ class Base(models.Model):
     deleted_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='deleted_%(class)ss'
     )
-    history = HistoricalRecords()
+    history = HistoricalRecords()  # Histórico padrão
 
-    objects = BaseManager()  # Usando o manager personalizado
+    objects = BaseManager()
 
     def save(self, *args, **kwargs):
         if self.pk is None:
@@ -35,3 +36,22 @@ class Base(models.Model):
 
     class Meta:
         abstract = True
+
+# Defina o modelo principal
+class MyModel(Base):
+    name = models.CharField(max_length=255)
+
+# Crie um modelo histórico separado, se necessário
+class HistoricalMyModel(models.Model):
+    # Inclua todos os campos que você deseja manter no histórico
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField('Data de Criação')
+    updated_at = models.DateTimeField('Última Atualização')
+    deleted_at = models.DateTimeField('Data de Exclusão', null=True, blank=True)
+    history_date = models.DateTimeField('Data do Histórico', auto_now_add=True)
+    history_change_reason = models.CharField('Razão da Mudança', max_length=100, blank=True)
+
+    class Meta:
+        verbose_name = 'Histórico do Meu Modelo'
+        verbose_name_plural = 'Históricos dos Meus Modelos'
+        ordering = ['-history_date']

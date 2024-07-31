@@ -54,7 +54,7 @@ start() {
     python manage.py collectstatic --noinput > /dev/null 2>&1 &
 
     # Inicia o worker do Celery em segundo plano com hostname dinâmico
-    celery -A core worker --loglevel=info --hostname=${HOSTNAME} --concurrency=4 > /dev/null 2>&1 &
+    celery -A core worker --loglevel=info --hostname=${HOSTNAME} --concurrency=8 --prefetch-multiplier=1 --max-tasks-per-child=1000 > /dev/null 2>&1 &
     CELERY_WORKER_PID=$!
     echo $CELERY_WORKER_PID > "$CONTROL_FILE"
 

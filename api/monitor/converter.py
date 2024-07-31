@@ -28,7 +28,7 @@ def save_or_update_device_data(device_data):
     try:
         device_id = device_data.get("device_id")
         if not device_id:
-            logger.error(f"device_id não encontrado na mensagem combinada: {device_data}")
+            # logger.error(f"device_id não encontrado na mensagem combinada: {device_data}")
             return
 
         with transaction.atomic():
@@ -39,14 +39,15 @@ def save_or_update_device_data(device_data):
                 for key, value in device_data.items():
                     setattr(existing_device, key, value)
                 existing_device.save()
-                logger.info(f"Dispositivo atualizado: {device_id}")
+                # logger.info(f"Dispositivo atualizado: {device_id} com os dados: {device_data}")
             else:
                 # Cria um novo registro
                 Device.objects.create(**device_data)
-                logger.info(f"Novo dispositivo salvo: {device_id}")
+                # logger.info(f"Novo dispositivo salvo: {device_id} com os dados: {device_data}")
 
     except Exception as e:
         logger.error(f"Erro ao salvar dados no banco: {e}")
+
 
 def process_line(line):
     parts = line.split(' ')

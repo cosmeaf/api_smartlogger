@@ -1,15 +1,19 @@
-from rest_framework import serializers
+# api/models/equipament_serialize.py
+
+from rest_framework import serializers # type: ignore
 from api.models.equipament_model import Equipament
 from api.models.device_model import Device
+from api.serializers.device_serializer import DeviceSerializer  # Importe o DeviceSerializer
 
 class EquipamentSerializer(serializers.ModelSerializer):
-    device = serializers.CharField(write_only=True, required=True)
+    device = DeviceSerializer(read_only=True)  # Usando o DeviceSerializer para mostrar os detalhes do dispositivo
     horas_trabalhadas = serializers.SerializerMethodField()
+    device_id = serializers.CharField(write_only=True, required=True)  # Campo para validação e criação
 
     class Meta:
         model = Equipament
         fields = [
-            'id', 'device', 'horas_trabalhadas', 'horimetro_inicialSuntech', 'horimetro_inicialMaquina', 'nome', 'ano', 'numero_serie',
+            'id', 'device', 'device_id', 'horas_trabalhadas', 'horimetro_inicialSuntech', 'horimetro_inicialMaquina', 'nome', 'ano', 'numero_serie',
             'modelo', 'ponto_medicao', 'combustivel', 'numero_pulsos', 'perimetro_pneu', 'horas_disponiveis_mes',
             'consumo_medio', 'alerta_velocidade', 'alerta_temperatura', 'alerta_shock', 'horas_efetivas_hodometro',
             'hodometro', 'obs', 'updated_at'
@@ -18,13 +22,13 @@ class EquipamentSerializer(serializers.ModelSerializer):
     def get_horas_trabalhadas(self, obj):
         return obj.horas_trabalhadas
 
-    def validate_device(self, value):
+    def validate_device_id(self, value):
         if not Device.objects.filter(device_id=value).exists():
             raise serializers.ValidationError("Identificação do dispositivo inválida. Verifique o 'device_id'.")
         return value
 
     def create(self, validated_data):
-        device_id = validated_data.pop('device')
+        device_id = validated_data.pop('device_id')
         try:
             device = Device.objects.get(device_id=device_id)
             if Equipament.objects.filter(device=device).exists():
@@ -39,7 +43,7 @@ class EquipamentSerializer(serializers.ModelSerializer):
         return equipament
 
     def update(self, instance, validated_data):
-        device_id = validated_data.pop('device', None)
+        device_id = validated_data.pop('device_id', None)
         if device_id:
             try:
                 device = Device.objects.get(device_id=device_id)
@@ -57,5 +61,5 @@ class EquipamentSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         representation = super().to_representation(instance)
-        representation['device'] = instance.device.device_id
+        representation['device'] = DeviceSerializer(instance.device).data  # Detalhes do dispositivo
         return representation
