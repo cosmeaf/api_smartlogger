@@ -22,17 +22,22 @@ class UserProfileModel(Base):
     position = models.CharField(max_length=100, blank=True, null=True)
     hire_date = models.DateField(blank=True, null=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['email']),
+            models.Index(fields=['first_name', 'last_name']),
+            models.Index(fields=['equipament']),
+        ]
+        verbose_name_plural = "User Profiles"
+        verbose_name = "User Profile"
+
     @property
     def device_id(self):
-        if self.equipament and self.equipament.device:
-            return self.equipament.device.device_id
-        return None
+        return self.equipament.device.device_id if self.equipament and self.equipament.device else None
 
     @property
     def rfid(self):
-        if self.equipament and self.equipament.device:
-            return self.equipament.device.rfid
-        return None
+        return self.equipament.device.rfid if self.equipament and self.equipament.device else None
 
     def __str__(self):
         return f'{self.first_name} {self.last_name} ({self.id})'

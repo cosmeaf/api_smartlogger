@@ -1,4 +1,3 @@
-# Maintenance model
 import logging
 from django.db import models
 from decimal import Decimal
@@ -17,10 +16,18 @@ class Maintenance(Base):
     alarm_hours = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     obs = models.TextField(blank=True, null=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['equipament']),
+            models.Index(fields=['name']),
+            models.Index(fields=['os']),
+        ]
+        verbose_name_plural = "Maintenance Records"
+        verbose_name = "Maintenance Record"
+
     @property
     def remaining_hours(self):
-        remaining = self.alarm_hours - self.horas_uso_peca
-        return remaining
+        return self.alarm_hours - self.horas_uso_peca
 
     @property
     def horas_uso_peca(self):
@@ -31,6 +38,24 @@ class Maintenance(Base):
             horas_uso_peca = round(horas_uso_peca, 2)
             return horas_uso_peca
         return Decimal(0)
+
+    @property
+    def background_color(self):
+        if not self.os:
+            color = ""
+        else:
+            remaining_hours = self.remaining_hours
+            if remaining_hours >= 0:
+                color = ""
+            elif remaining_hours >= -50:
+                color = "bg-yellow-300"  # Amarelo
+            elif remaining_hours >= -100:
+                color = "bg-orange-300"  # Laranja claro
+            else:
+                color = "bg-red-300"  # Vermelho
+
+        logger.debug(f"OS status: {self.os}, Background color: {color}")
+        return color
 
     def save(self, *args, **kwargs):
         if self.equipament and self.equipament.device:

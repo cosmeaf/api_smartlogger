@@ -1,5 +1,3 @@
-# models.py
-
 import uuid
 from django.db import models
 from simple_history.models import HistoricalRecords
@@ -8,7 +6,7 @@ from django.conf import settings
 
 class BaseManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(deleted_at__isnull=True)
+        return super().get_queryset().filter(deleted_at__isnull=True).select_related('deleted_by')
 
 class Base(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -36,14 +34,24 @@ class Base(models.Model):
 
     class Meta:
         abstract = True
+        indexes = [
+            models.Index(fields=['deleted_at']),
+        ]
 
-# Defina o modelo principal
+class MyModelManager(BaseManager):
+    def get_queryset(self):
+        return super().get_queryset().select_related('deleted_by')
+
 class MyModel(Base):
     name = models.CharField(max_length=255)
+    objects = MyModelManager()
 
-# Crie um modelo histórico separado, se necessário
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+        ]
+
 class HistoricalMyModel(models.Model):
-    # Inclua todos os campos que você deseja manter no histórico
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField('Data de Criação')
     updated_at = models.DateTimeField('Última Atualização')

@@ -213,3 +213,38 @@ CSP_DEFAULT_SRC = ("'self'",)
 CSP_CONNECT_SRC = ("'self'", "https://api.smartlogger.duckdns.org", "ws://smartlogger.duckdns.org", "wss://smartlogger.duckdns.org")
 
 
+# Importações do Celery
+CELERY_IMPORTS = ("api.tasks", )
+
+# Configurações de serialização
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+
+# Timezone
+CELERY_TIMEZONE = 'America/Sao_Paulo'
+
+# Configurações do broker
+BROKER_URL = 'amqp://guest:guest@localhost:5672/'
+CELERY_RESULT_BACKEND = 'rpc://'
+BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BROKER_CONNECTION_RETRY = True
+
+# Agendamento da tarefa periódica
+CELERY_BEAT_SCHEDULE = {
+    'process_device_updates_every_minute': {
+        'task': 'api.tasks.process_device_updates',
+        'schedule': 60.0,  # a cada 60 segundos
+    },
+    'monitor-maintenance-status': {
+        'task': 'api.tasks.monitor_maintenance_status',
+        'schedule': 10,  # Executa a cada 5 minutos
+    },
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
