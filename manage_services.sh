@@ -55,6 +55,8 @@ start() {
 
     # Inicia o worker do Celery em segundo plano com hostname dinâmico
     celery -A core worker --loglevel=info --hostname=${HOSTNAME} --concurrency=8 --prefetch-multiplier=2 --max-tasks-per-child=1000 > /dev/null 2>&1 &
+    # celery -A core worker --loglevel=info --concurrency=4 --max-tasks-per-child=1000 --prefetch-multiplier=1 > /dev/null 2>&1 &
+
     CELERY_WORKER_PID=$!
     echo $CELERY_WORKER_PID > "$CONTROL_FILE"
 

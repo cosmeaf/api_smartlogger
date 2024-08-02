@@ -17,3 +17,5 @@ app.autodiscover_tasks()
 @app.task(bind=True)
 def debug_task(self):
     logger.info(f'Request: {self.request!r}')
+    logger.info(f'Broker URL: {self.app.conf.broker_url}')
+    logger.info(f'Result Backend: {self.app.conf.result_backend}')

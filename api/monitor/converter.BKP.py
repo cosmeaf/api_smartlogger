@@ -24,30 +24,30 @@ def calcular_y(ADC):
     ADC = float(ADC)
     return round(0.1856 * ADC**6 - 4.8729 * ADC**5 + 51.867 * ADC**4 - 285.27 * ADC**3 + 853.52 * ADC**2 - 1305 * ADC + 793.79, 2)
 
-def save_or_update_device_data(device_data):
+def save_or_update_device_data(device_data_list):
     try:
-        device_id = device_data.get("device_id")
-        if not device_id:
-            # logger.error(f"device_id não encontrado na mensagem combinada: {device_data}")
-            return
-
         with transaction.atomic():
-            # Verifica se o dispositivo já existe
-            existing_device = Device.objects.filter(device_id=device_id).first()
-            if existing_device:
-                # Atualiza apenas os campos permitidos
-                for key, value in device_data.items():
-                    setattr(existing_device, key, value)
-                existing_device.save()
-                # logger.info(f"Dispositivo atualizado: {device_id} com os dados: {device_data}")
-            else:
-                # Cria um novo registro
-                Device.objects.create(**device_data)
-                # logger.info(f"Novo dispositivo salvo: {device_id} com os dados: {device_data}")
+            for device_data in device_data_list:
+                device_id = device_data.get("device_id")
+                if not device_id:
+                    logger.error(f"device_id não encontrado na mensagem combinada: {device_data}")
+                    continue
+
+                # Verifica se o dispositivo já existe
+                existing_device = Device.objects.filter(device_id=device_id).first()
+                if existing_device:
+                    # Atualiza apenas os campos permitidos
+                    for key, value in device_data.items():
+                        setattr(existing_device, key, value)
+                    existing_device.save()
+                    logger.info(f"Dispositivo atualizado: {device_id} com os dados: {device_data}")
+                else:
+                    # Cria um novo registro
+                    Device.objects.create(**device_data)
+                    logger.info(f"Novo dispositivo salvo: {device_id} com os dados: {device_data}")
 
     except Exception as e:
         logger.error(f"Erro ao salvar dados no banco: {e}")
-
 
 def process_line(line):
     parts = line.split(' ')
@@ -90,7 +90,7 @@ def process_stt_data(data):
             round((float(dados[25]) / 256) ** 2, 2) + round((float(dados[26]) / 256) ** 2, 2)) ** 0.5, 2),
             "SoC_battery_voltage": calcular_soc(float(dados[22])), "temperatura": calcular_y(dados[27])
         }
-        save_or_update_device_data(device_data)
+        return device_data
 
 def process_alt_data(data):
     dados = data.split(";")
@@ -110,7 +110,7 @@ def process_alt_data(data):
             round((float(dados[25]) / 256) ** 2, 2) + round((float(dados[26]) / 256) ** 2, 2)) ** 0.5, 2),
             "SoC_battery_voltage": calcular_soc(float(dados[22])), "temperatura": calcular_y(dados[27])
         }
-        save_or_update_device_data(device_data)
+        return device_data
 
 def process_uex_data(data):
     dados = data.split(";")
@@ -125,11 +125,12 @@ def process_uex_data(data):
             "velocidade_pico": dados[19], "temperatura_instantanea": dados[20], "temperatura_pico": dados[21],
             "horimeter": horimeter
         }
-        save_or_update_device_data(device_data)
+        return device_data
 
 @shared_task
 def process_log_data():
     process = subprocess.Popen(comando, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    device_data_list = []
 
     try:
         while True:
@@ -206,14 +207,24 @@ def process_log_data():
                             logger.error(f"device_id não encontrado na mensagem: {device_data}. Linha original: {linha.strip()}")
                             continue
 
+                        # Adiciona os dados do dispositivo à lista
+                        device_data_list.append(device_data)
+
                         # Salva ou atualiza os dados do dispositivo no banco de dados
-                        save_or_update_device_data(device_data)
+                        if len(device_data_list) >= 100:  # Ajuste o tamanho do lote conforme necessário
+                            save_or_update_device_data(device_data_list)
+                            device_data_list.clear()
                     except ValueError as e:
                         logger.error(f"Erro de conversão de dados na linha: {linha.strip()} - Campos recebidos: {dados} - Erro: {e}")
                     except Exception as e:
                         logger.error(f"Erro ao processar a linha: {linha.strip()} - Erro: {e}")
                 else:
                     logger.error("Linha incompleta: {}".format(linha.strip()))
+
+        # Salva qualquer dado restante no final do loop
+        if device_data_list:
+            save_or_update_device_data(device_data_list)
+
     except Exception as e:
         process.terminate()
         logger.error(f"Processo interrompido devido a erro: {e}")

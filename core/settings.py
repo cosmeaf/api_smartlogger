@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'rest_auth.registration',
     'rest_framework.authtoken',
     'django_celery_results',
+    'dbbackup',
     'api',
 ]
 
@@ -225,7 +226,8 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'America/Sao_Paulo'
 
 # Configurações do broker
-BROKER_URL = 'amqp://guest:guest@localhost:5672/'
+# BROKER_URL = 'redis://172.16.0.3:6379/0'
+CELERY_BROKER_URL = 'amqp://superuser:Canela_32Canela_32@localhost:5672//'
 CELERY_RESULT_BACKEND = 'rpc://'
 BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BROKER_CONNECTION_RETRY = True
@@ -248,3 +250,7 @@ CACHES = {
         'LOCATION': 'unique-snowflake',
     }
 }
+
+# Backup
+DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+DBBACKUP_STORAGE_OPTIONS = {'location': os.path.join(BASE_DIR)}
