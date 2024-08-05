@@ -1,8 +1,5 @@
-from decimal import Decimal
-import logging
 from datetime import datetime
 from django.db import models
-from django.core.exceptions import ValidationError
 from api.models.base_model import Base
 from core.config.get_logger import get_logger
 
@@ -13,8 +10,8 @@ def current_year():
 
 class Equipament(Base):
     device = models.OneToOneField('Device', on_delete=models.CASCADE, related_name='equipments')
-    begin_hour_device = models.FloatField('Ajuste de Zero Hora Suntech', default=0)
-    begin_hour_machine = models.FloatField('AZ Hora Máquina', default=0)
+    initial_hour_device = models.FloatField('Ajuste de Zero Hora Suntech', default=0)
+    initial_hour_machine = models.FloatField('AZ Hora Máquina', default=0)
     total_hour_meter = models.FloatField('Horímetro Total', default=0, editable=False)
     name = models.CharField('Nome', max_length=255)
     year = models.IntegerField('Ano', blank=True, null=True, default=current_year)
@@ -46,15 +43,15 @@ class Equipament(Base):
     def work_hour(self):
         if self.device:
             hour_device = float(self.device.horimeter)
-            work_hour = hour_device + self.begin_hour_machine - self.begin_hour_device
+            work_hour = hour_device + self.initial_hour_machine - self.initial_hour_device
+            logger.debug(f"Calculating work_hour: hour_device={hour_device}, initial_hour_machine={self.initial_hour_machine}, initial_hour_device={self.initial_hour_device}, result={work_hour}")
             return round(work_hour, 2)
         return 0
 
     def save(self, *args, **kwargs):
-        if not self.pk:
-            if Equipament.objects.filter(device=self.device).exists():
-                raise ValidationError(f'O dispositivo {self.device.device_id} já está associado a outro equipamento.')
+        if self.pk is None:
             if self.device:
-                self.begin_hour_device = float(self.device.horimeter)
-        self.total_hour_meter = self.work_hour
+                self.initial_hour_device = float(self.device.horimeter)
+                logger.debug(f"Setting initial initial_hour_device: {self.initial_hour_device}")
         super().save(*args, **kwargs)
+        logger.debug(f"Saving Equipament: {self}")
